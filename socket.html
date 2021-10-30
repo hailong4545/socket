@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <style>
+    .Game {
+      display: flex;
+      justify-content: space-between;
+      padding: 0px 150px;
+    }
+
+    #next {
+      width: 120px;
+      height: 35px;
+      position: absolute;
+      bottom: 100px;
+      right:60px;
+      font-size:20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="form">
+    <input type="text" name="name" placeholder="Tên người chơi">
+    <select id="token">
+      <option value="admin">Quản trị viên</option>
+      <option value="player">Người chơi</option>
+    </select>
+    <button id="btn-submit">Submit</button>
+  </div>
+  <div class="controller" style="display: none">
+    <h1 style="text-align: center;">Bài bán đinh 3</h1>
+    <div class="Game">
+      <div class="asset">
+        <br>
+        <span>Tài sản hiện có : <span>0</span></span><br><br>
+        <span>Nhà máy : <span>0</span></span><br><br>
+        <span>Hàng tồn kho : <span>0</span></span><br><br>
+        <span>Tiền mặt : <span>100000000</span></span><br><br>
+        <span>Nợ ngân hàng : <span>0</span></span><br><br>
+        <span>Tiền gửi ngân hàng : <span>0</span></span><br><br>
+        <span>Có thể vay : <span>0</span></span><br><br>
+      </div>
+      <div class="build">
+        <span>Xây nhà máy</span><br>
+        <input type="text" value="" name="XayNhaMay" placeholder=""><br><br>
+        <span>Xây nhà phân phối</span><br>
+        <input type="text" value="" name="XayNhaPP" placeholder=""><br><br>
+        <span>Bán Đinh</span><br>
+        <input type="text" value="" name="banDinh" placeholder=""><br><br>
+        <span>Sản xuất Đinh</span><br>
+        <input type="text" value="" name="sxDinh" placeholder=""><br><br>
+        <span>Trả nợ ngân hàng</span><br>
+        <input type="text" value="" name="TNNH" placeholder=""><br><br>
+        <span>Vay ngân hàng</span><br>
+        <input type="text" value="" name="VNH" placeholder=""><br><br>
+        <button id="btn-build">Thực Hiện</button>
+      </div>
+      <div class="exchange">
+        <span>Tên</span><br>
+        <select style="width: 170px; height: 25px" id="exchangeName">
+        </select><br><br>
+        <span>Lựa chọn</span><br>
+        <select id="action" style="width: 170px; height: 25px">
+          <option value="sell">Bán</option>
+          <option value="buy">Mua</option>
+        </select><br><br>
+        <span>Số lượng</span><br>
+        <input type="text" value="" name="count" placeholder=""><br><br>
+        <div>
+          <span>Giá</span><br>
+          <input style="height: 20px" type="text" name="price" placeholder="giá..."><br><br>
+        </div>
+        <button id="btn-send-req">Gửi yêu cầu</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="next" style="display: none;">Next Turn</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io('https://socketio12311.herokuapp.com/');
+
+    const formHome = document.querySelector('.form');
+    const tagName = document.querySelector('input[name="name"]')
+    const tagToken = document.querySelector('#token');
+    const btnSubmit = document.querySelector('#btn-submit');
+
+    const homeControllers = document.querySelector('.controller');
+    const nextController = document.querySelector('#next');
+
+    const countNhaMay = document.querySelector('input[name="XayNhaMay"]');
+    const countNhaPP = document.querySelector('input[name="XayNhaPP"]');
+    const countBanDinh = document.querySelector('input[name="banDinh"]');
+    const countSxDinh = document.querySelector('input[name="sxDinh"]');
+    const TNNH= document.querySelector('input[name="TNNH"]');
+    const VNH = document.querySelector('input[name="VNH"]');
+
+    const selectExchangeName = document.querySelector('#exchangeName');
+
+    var name = "";
+    var token = "";
+
+
+    var nhaMay = 90000000;
+    var nhaPhanPhoi = 8000000;
+    var sxDinh = 10000;
+    var banDinh = 20000;
+    var nganHang = 0.05;
+    var tienMat = 100000000;
+
+    const sendRequest = document.querySelector('#btn-send-req');
+    const action = document.querySelector('#action');
+    const tagPrice = document.querySelector('input[name="price"]');
+    const countExchange = document.querySelector('input[name="count"]');
+
+
+    socket.on('render', (data) => {
+      selectExchangeName.innerHTML = "";
+      for(let i = 0; i < data.length; i++) {
+        if (data[i] != name) {
+          selectExchangeName.innerHTML += `<option>${data[i]}</option>`;
+        }
+      }
+    })
+
+    socket.on('recive-request', (data) => {
+      var flag = confirm(`${data.name} đã gửi yêu cầu ${data.action} ${data.count} đinh với giá ${data.price}`);
+      if (flag) {
+        console.log('jiji');
+      }
+      else {
+        console.log('hhi');
+      }
+    });
+
+    btnSubmit.onclick = (e) => {
+      name = tagName.value;
+      token = tagToken.value;
+      console.log([name, token]);
+      formHome.style.display = "none";
+      homeControllers.style.display = 'block';
+      if (token == 'admin') {
+        nextController.style.display = 'block';
+      }
+      socket.emit('new person', name);
+    };
+
+    sendRequest.onclick = (e) => {
+      let inforExchange = {name: selectExchangeName.value, action: action.value, count: countExchange.value, price: tagPrice.value};
+      console.log('hihi');
+      socket.emit('send-request', inforExchange);
+    };
+  </script>
+</body>
+</html>
