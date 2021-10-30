@@ -4,9 +4,12 @@ const app = express();
 app.use(require('cors')())
 
 const server = require("http").createServer(app);
-const { Server } = require('socket.io')
 
-const io = new Server(server);
+const io = require('socket.io')(server, {
+    cors: {
+        origin: "*"
+    }
+})
 
 
 app.get('/', (req, res) => {
